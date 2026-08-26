@@ -1,0 +1,513 @@
+/* -------------------------------------------------------------------------
+ * Acervo Familiar — folha de estilos da aplicação
+ *
+ * O Tabler (Bootstrap 5) é o ÚNICO design system do projeto. Não reintroduza
+ * Tailwind aqui: o preflight dele é carregado depois do Tabler e zera botões,
+ * títulos, bordas e inputs do Bootstrap com a mesma especificidade, quebrando
+ * o layout inteiro.
+ *
+ * Ordem dos imports importa: base (Tabler) → plugins → ajustes locais.
+ * ---------------------------------------------------------------------- */
+@import '@tabler/core/dist/css/tabler.min.css';
+@import '@tabler/icons-webfont/dist/tabler-icons.min.css';
+@import 'select2/dist/css/select2.min.css';
+@import 'select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css';
+@import 'filepond/dist/filepond.min.css';
+
+/* =========================================================================
+ * Select2
+ *
+ * O tema select2-bootstrap-5-theme fixa as cores do Bootstrap puro direto no
+ * CSS (#fff, #212529, #ced4da, #6c757d) e não tem suporte a tema escuro: sem
+ * estes ajustes o controle destoa do Tabler no claro e fica ilegível no escuro.
+ *
+ * IMPORTANTE: cada seletor abaixo tem a MESMA profundidade de classes do
+ * seletor equivalente no tema. Escrever um nível a menos perde por
+ * especificidade e as cores fixas voltam silenciosamente.
+ * ====================================================================== */
+
+:root {
+    /* "×" usado nos chips e no botão de limpar. Aplicado via mask para herdar a
+       cor do tema — como background-image o SVG teria a cor fixa embutida. */
+    --kz-x-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='%23000' d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
+}
+
+/* --- caixa do controle: idêntica a um .form-control do Tabler --- */
+.select2-container--bootstrap-5 .select2-selection {
+    min-height: calc(1.25rem + 1.125rem + (var(--tblr-border-width) * 2));
+    padding: 0.5625rem 1rem;
+    font-family: var(--tblr-body-font-family);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: var(--tblr-body-color);
+    background-color: var(--tblr-bg-forms);
+    border: var(--tblr-border-width) solid var(--tblr-border-color);
+    border-radius: var(--tblr-border-radius);
+    box-shadow: var(--tblr-shadow-input);
+    transition:
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection,
+.select2-container--bootstrap-5.select2-container--open .select2-selection {
+    border-color: rgba(var(--tblr-primary-rgb), 0.5);
+    box-shadow: var(--tblr-shadow-input), 0 0 0 0.25rem rgba(var(--tblr-primary-rgb), 0.25);
+}
+
+.select2-container--bootstrap-5.select2-container--disabled .select2-selection {
+    color: var(--tblr-disabled-color);
+    background-color: var(--tblr-bg-surface-secondary);
+}
+
+/* --- seleção simples --- */
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    color: var(--tblr-body-color);
+    line-height: 1.25rem;
+}
+
+.select2-container--bootstrap-5
+    .select2-selection--single
+    .select2-selection__rendered
+    .select2-selection__placeholder {
+    color: var(--tblr-secondary-color);
+    line-height: 1.25rem;
+}
+
+/* Seta igual à do .form-select do Tabler (a do tema é escondida logo abaixo). */
+.select2-container--bootstrap-5 .select2-selection--single {
+    padding-right: 2.25rem;
+    background-image: var(--tblr-form-select-bg-img);
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+    display: none;
+}
+
+/* --- botão de limpar (allowClear) --- */
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear,
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__clear {
+    background: var(--tblr-secondary-color);
+    -webkit-mask: var(--kz-x-icon) center / 0.75rem auto no-repeat;
+    mask: var(--kz-x-icon) center / 0.75rem auto no-repeat;
+    opacity: 0.75;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear:hover,
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__clear:hover {
+    background: var(--tblr-danger);
+    opacity: 1;
+}
+
+/* --- seleção múltipla: chips no estilo dos badges do Tabler --- */
+.select2-container--bootstrap-5 .select2-selection--multiple {
+    padding: 0.3125rem 0.5rem;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered {
+    gap: 0.25rem;
+}
+
+.select2-container--bootstrap-5
+    .select2-selection--multiple
+    .select2-selection__rendered
+    .select2-selection__choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0.125rem 0.25rem 0.125rem 0;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    color: var(--tblr-body-color);
+    background-color: rgba(var(--tblr-primary-rgb), 0.14);
+    border: 0;
+    border-radius: var(--tblr-border-radius);
+    box-shadow: inset 0 0 0 var(--tblr-border-width) rgba(var(--tblr-primary-rgb), 0.25);
+}
+
+.select2-container--bootstrap-5
+    .select2-selection--multiple
+    .select2-selection__rendered
+    .select2-selection__choice
+    .select2-selection__choice__remove {
+    order: 2;
+    width: 0.625rem;
+    height: 0.625rem;
+    margin: 0;
+    padding: 0;
+    background: currentColor;
+    -webkit-mask: var(--kz-x-icon) center / 0.625rem auto no-repeat;
+    mask: var(--kz-x-icon) center / 0.625rem auto no-repeat;
+    border: 0;
+    opacity: 0.6;
+}
+
+.select2-container--bootstrap-5
+    .select2-selection--multiple
+    .select2-selection__rendered
+    .select2-selection__choice
+    .select2-selection__choice__remove:hover {
+    background: currentColor;
+    opacity: 1;
+}
+
+/* --- campo de busca --- */
+
+/* O tema deixa a busca da seleção múltipla como bloco de largura total, o que
+   empurra o cursor para uma segunda linha abaixo dos chips. Aqui ela volta a
+   fluir ao lado deles, como num campo de tags moderno. */
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-search {
+    display: flex;
+    flex: 1 1 4rem;
+    width: auto;
+    min-width: 4rem;
+    height: 1.25rem;
+}
+
+
+.select2-container--bootstrap-5 .select2-search--inline .select2-search__field,
+.select2-container--bootstrap-5
+    .select2-selection--multiple
+    .select2-search
+    .select2-search__field {
+    height: 1.25rem;
+    margin-top: 0;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: var(--tblr-body-color);
+}
+
+.select2-container--bootstrap-5 .select2-search__field::placeholder {
+    color: var(--tblr-secondary-color);
+}
+
+/* --- dropdown --- */
+.select2-container--bootstrap-5 .select2-dropdown {
+    overflow: hidden;
+    color: var(--tblr-body-color);
+    background-color: var(--tblr-bg-surface);
+    border-color: var(--tblr-border-color);
+    border-radius: var(--tblr-border-radius);
+    box-shadow: var(--tblr-shadow-dropdown);
+}
+
+.select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field {
+    color: var(--tblr-body-color);
+    background-color: var(--tblr-bg-forms);
+    border: var(--tblr-border-width) solid var(--tblr-border-color);
+    border-radius: var(--tblr-border-radius);
+}
+
+.select2-container--bootstrap-5 .select2-dropdown .select2-search .select2-search__field:focus {
+    border-color: rgba(var(--tblr-primary-rgb), 0.5);
+    box-shadow: 0 0 0 0.25rem rgba(var(--tblr-primary-rgb), 0.25);
+}
+
+.select2-container--bootstrap-5 .select2-dropdown .select2-results__options .select2-results__option {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--tblr-body-color);
+}
+
+.select2-container--bootstrap-5
+    .select2-dropdown
+    .select2-results__options
+    .select2-results__option.select2-results__option--highlighted {
+    color: var(--tblr-body-color);
+    background-color: var(--tblr-bg-surface-secondary);
+}
+
+.select2-container--bootstrap-5
+    .select2-dropdown
+    .select2-results__options
+    .select2-results__option.select2-results__option--selected,
+.select2-container--bootstrap-5
+    .select2-dropdown
+    .select2-results__options
+    .select2-results__option[aria-selected='true']:not(.select2-results__option--highlighted) {
+    color: #fff;
+    background-color: var(--tblr-primary);
+}
+
+.select2-container--bootstrap-5
+    .select2-dropdown
+    .select2-results__options
+    .select2-results__option.select2-results__message {
+    color: var(--tblr-secondary-color);
+}
+
+/* Estado de erro do Laravel (`is-invalid` no <select> original). */
+.is-invalid + .select2-container--bootstrap-5 .select2-selection {
+    border-color: var(--tblr-danger);
+}
+
+.is-invalid + .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    box-shadow: 0 0 0 0.25rem rgba(var(--tblr-danger-rgb), 0.25);
+}
+
+/* =========================================================================
+ * Grade de fotos
+ * ====================================================================== */
+.photo-tile {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 1;
+    background-color: var(--tblr-bg-surface-secondary);
+    border-radius: var(--tblr-border-radius);
+}
+
+/* Quando a tile é a primeira coisa dentro de um card (capa de álbum), ela
+   assume o raio do card no topo e fica reta embaixo, senão os cantos da imagem
+   escapam por fora do arredondamento. */
+.card > .photo-tile:first-child {
+    border-start-start-radius: var(--tblr-border-radius);
+    border-start-end-radius: var(--tblr-border-radius);
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.photo-tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.photo-tile::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 55%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.photo-tile:hover img,
+.photo-tile:focus-visible img {
+    transform: scale(1.05);
+}
+
+.photo-tile:hover::after,
+.photo-tile:focus-visible::after {
+    opacity: 1;
+}
+
+.photo-tile__overlay {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 1;
+    padding: 0.5rem 0.625rem;
+    color: #fff;
+    opacity: 0;
+    transform: translateY(0.5rem);
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+    pointer-events: none;
+}
+
+.photo-tile:hover .photo-tile__overlay,
+.photo-tile:focus-visible .photo-tile__overlay {
+    opacity: 1;
+    transform: none;
+}
+
+.photo-tile__title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.photo-tile__meta {
+    font-size: 0.6875rem;
+    opacity: 0.8;
+}
+
+/* Botão de zoom sobreposto */
+.photo-tile__zoom {
+    position: absolute;
+    top: 0.375rem;
+    right: 0.375rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    border: 0;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.photo-tile-wrapper:hover .photo-tile__zoom,
+.photo-tile__zoom:focus-visible {
+    opacity: 1;
+}
+
+/* =========================================================================
+ * Lightbox
+ * ====================================================================== */
+body.lightbox-open {
+    overflow: hidden;
+}
+
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1080;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: clamp(1rem, 4vw, 3rem);
+    background: rgba(10, 12, 16, 0.92);
+    backdrop-filter: blur(4px);
+}
+
+.lightbox.is-open {
+    display: flex;
+}
+
+.lightbox__figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+    min-width: 0;
+    max-height: 100%;
+}
+
+.lightbox__img {
+    max-width: 100%;
+    max-height: calc(100vh - 9rem);
+    object-fit: contain;
+    border-radius: var(--tblr-border-radius);
+    box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.5);
+}
+
+.lightbox__caption {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.lightbox__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.75rem;
+    height: 2.75rem;
+    font-size: 1.25rem;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border: 0;
+    border-radius: 50%;
+    transition: background 0.15s ease;
+}
+
+.lightbox__btn:hover,
+.lightbox__btn:focus-visible {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.lightbox__close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1;
+}
+
+@media (max-width: 575.98px) {
+    .lightbox__prev,
+    .lightbox__next {
+        position: absolute;
+        bottom: 1rem;
+    }
+
+    .lightbox__prev {
+        left: 1rem;
+    }
+
+    .lightbox__next {
+        right: 1rem;
+    }
+}
+
+/* =========================================================================
+ * Ajustes gerais
+ * ====================================================================== */
+
+/* Chips dos filtros ativos na busca de fotos. */
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.5rem 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1.5rem;
+    color: var(--tblr-body-color);
+    background-color: var(--tblr-bg-surface-secondary);
+    border: var(--tblr-border-width) solid var(--tblr-border-color);
+    border-radius: 999px;
+    text-decoration: none;
+}
+
+.filter-chip:hover {
+    color: var(--tblr-danger);
+    border-color: var(--tblr-danger);
+}
+
+.filter-chip__label {
+    color: var(--tblr-secondary-color);
+}
+
+/* Estado vazio com ícone grande. */
+.empty-icon-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1rem;
+    font-size: 1.75rem;
+    color: var(--tblr-primary);
+    background-color: rgba(var(--tblr-primary-rgb), 0.1);
+    border-radius: 50%;
+}
+
+/* FilePond dentro do Tabler. */
+.filepond--root {
+    margin-bottom: 0;
+    font-family: var(--tblr-body-font-family);
+}
+
+.filepond--panel-root {
+    background-color: var(--tblr-bg-surface-secondary);
+    border: var(--tblr-border-width) dashed var(--tblr-border-color);
+    border-radius: var(--tblr-border-radius);
+}
+
+.filepond--drop-label {
+    color: var(--tblr-secondary-color);
+}
+
+.filepond--label-action {
+    text-decoration-color: var(--tblr-primary);
+    color: var(--tblr-primary);
+}
