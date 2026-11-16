@@ -49,6 +49,17 @@ class JsChallengeTest extends TestCase
             ->assertHeader('Retry-After');
     }
 
+    public function test_verify_url_is_relative_so_https_pages_never_post_to_http(): void
+    {
+        $this->enable();
+
+        // Simula o PHP achando que a conexão é http (proxy terminando o HTTPS).
+        $html = $this->get('http://kzion.exemplo/login')->getContent();
+
+        $this->assertStringContainsString('verifyUrl: "\\/_jsc\\/verify"', $html);
+        $this->assertStringNotContainsString('http:\\/\\/kzion.exemplo\\/_jsc', $html);
+    }
+
     public function test_post_or_json_without_pass_is_refused(): void
     {
         $this->enable();

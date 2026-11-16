@@ -108,6 +108,49 @@ php artisan route:cache
 php artisan view:cache
 ```
 
+### 7. Agendador (cron)
+
+O Laravel precisa de um cron chamando o agendador a cada minuto. Hoje ele
+apaga, uma vez por dia, os dispositivos confiáveis vencidos do desafio JS
+(`model:prune` em `routes/console.php`).
+
+Rode o cron com o **mesmo usuário do PHP-FPM** (normalmente `www-data`). Se
+rodar como `root`, ele cria arquivos em `storage/` (como o
+`storage/logs/laravel.log`) que o PHP-FPM depois não consegue escrever.
+
+Confira o usuário do PHP-FPM e o dono do `storage`:
+
+```bash
+grep -E '^(user|group)\s*=' /etc/php/*/fpm/pool.d/*.conf
+ls -ld storage storage/logs
+```
+
+Crie o cron para esse usuário, com `sudo crontab -u www-data -e`:
+
+```
+* * * * * cd /var/www/kzion && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
+```
+
+Ou com um arquivo `/etc/cron.d/kzion`, em que o usuário entra como campo:
+
+```
+* * * * * www-data cd /var/www/kzion && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
+```
+
+- O `www-data` costuma ter shell `nologin`, mas isso não atrapalha: o cron
+  executa os comandos com `/bin/sh`.
+- Use o caminho completo do PHP (`which php`), porque o cron tem um `PATH`
+  mínimo. Com mais de uma versão instalada, use a mesma do FPM (por exemplo,
+  `/usr/bin/php8.3`).
+
+Teste como o próprio usuário. Os dois comandos devem rodar sem erro de
+permissão, e o `schedule:list` deve mostrar o `model:prune` diário:
+
+```bash
+sudo -u www-data /usr/bin/php artisan schedule:list
+sudo -u www-data /usr/bin/php artisan schedule:run
+```
+
 ---
 
 ## Servidor web (nginx + PHP-FPM)

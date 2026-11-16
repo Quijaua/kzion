@@ -36,7 +36,12 @@ class JsChallengeGate
                 'token' => JsChallenge::issueToken($request),
                 'difficulty' => (int) config('jschallenge.difficulty', 18),
                 'minDelay' => (int) config('jschallenge.min_delay_ms', 0),
-                'verifyUrl' => url('/_jsc/verify'),
+                // Relativo de propósito: com url() o Laravel monta o endereço
+                // com o esquema que o PHP enxerga. Se o HTTPS termina num proxy
+                // (ou falta o fastcgi_param HTTPS), sai "http://…" numa página
+                // https, o navegador bloqueia como conteúdo misto e a tela
+                // mostra "Falha de conexão".
+                'verifyUrl' => route('jschallenge.verify', [], false),
             ], 503)
             ->withHeaders($this->noStoreHeaders() + [
                 'Retry-After' => '30',
