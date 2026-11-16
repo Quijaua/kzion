@@ -60,6 +60,11 @@
                             ver esta foto. Tirar todas as marcações esconde a foto de todo mundo menos dos
                             administradores.
                         </div>
+                        <div class="form-hint">
+                            Não está na lista?
+                            <a href="{{ route('people.create') }}" target="_blank" rel="noopener">Cadastrar nova pessoa</a>
+                            e recarregar esta página.
+                        </div>
                     </div>
 
                     <div class="mb-3">
