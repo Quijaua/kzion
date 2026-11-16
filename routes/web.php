@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
     Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::get('/settings/jschallenge', [SettingController::class, 'jsChallenge'])->name('settings.jschallenge');
+    Route::put('/settings/jschallenge', [SettingController::class, 'updateJsChallenge'])->name('settings.jschallenge.update');
 });
 
 Route::middleware('auth')->group(function () {
