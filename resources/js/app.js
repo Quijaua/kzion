@@ -415,6 +415,8 @@ function initBulkUpload() {
     const pond = FilePond.create(bulkInput, {
         name: 'filepond',
         allowMultiple: true,
+        // UPLOAD_PARALLEL no .env (config/kzion.php), entregue pela view.
+        maxParallelUploads: Number.parseInt(bulkInput.dataset.parallel, 10) || 3,
         credits: false,
         labelIdle:
             'Arraste e solte várias imagens ou <span class="filepond--label-action">procure no computador</span>',

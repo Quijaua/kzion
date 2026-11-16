@@ -34,6 +34,7 @@
                         </span>
                     </label>
                     <input type="file" name="photos[]" id="bulk-upload" class="filepond" multiple
+                           data-parallel="{{ config('kzion.upload.parallel') }}"
                            accept="image/jpeg,image/png,image/webp">
                 </form>
             </div>

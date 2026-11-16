@@ -204,4 +204,20 @@ class UploadTest extends TestCase
 
         $this->assertNull(Photo::first()->exif);
     }
+
+    public function test_bulk_page_passes_the_parallel_upload_setting(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+
+        $this->actingAs($user)
+            ->get(route('photos.create', ['mode' => 'bulk']))
+            ->assertOk()
+            ->assertSee('data-parallel="3"', false);
+
+        config(['kzion.upload.parallel' => 5]);
+
+        $this->actingAs($user)
+            ->get(route('photos.create', ['mode' => 'bulk']))
+            ->assertSee('data-parallel="5"', false);
+    }
 }
