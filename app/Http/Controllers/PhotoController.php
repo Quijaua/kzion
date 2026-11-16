@@ -35,6 +35,20 @@ class PhotoController extends Controller
         return view('photos.index', compact('photos', 'people', 'albums'));
     }
 
+    /**
+     * Fila de preenchimento: só o nome de cada foto sem dados, com link para
+     * ela. As mais antigas primeiro, para a lista andar enquanto se trabalha.
+     */
+    public function pending(Request $request): View
+    {
+        $photos = Photo::accessibleTo($request->user())
+            ->withoutDetails()
+            ->orderBy('id')
+            ->paginate(100, ['id', 'original_filename']);
+
+        return view('photos.pending', compact('photos'));
+    }
+
     protected function applyFilters($query, Request $request): void
     {
         if ($people = $request->input('people', [])) {

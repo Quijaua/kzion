@@ -16,6 +16,7 @@ Route::get('/', fn () => redirect()->route('dashboard'));
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
+    Route::get('photos/pending', [PhotoController::class, 'pending'])->name('photos.pending');
     Route::resource('photos', PhotoController::class);
     Route::post('photos/upload', [PhotoController::class, 'upload'])->name('photos.upload');
     Route::get('photos/upload/status/{token}', [PhotoController::class, 'uploadStatus'])->name('photos.upload.status');

@@ -5,6 +5,10 @@
 @section('page-subtitle', 'Bem-vindo de volta, ' . auth()->user()->name . '.')
 
 @section('page-actions')
+    <a href="{{ route('photos.pending') }}" class="btn" title="Fotos sem título, descrição, local, pessoas ou álbum">
+        <i class="ti ti-forms me-1"></i> Fotos sem dados
+        <span class="badge {{ $pendingCount ? 'bg-orange' : 'bg-green' }} text-white ms-2">{{ number_format($pendingCount, 0, ',', '.') }}</span>
+    </a>
     <a href="{{ route('photos.create') }}" class="btn btn-primary">
         <i class="ti ti-upload me-1"></i> Enviar fotos
     </a>

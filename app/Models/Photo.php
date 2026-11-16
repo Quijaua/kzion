@@ -126,6 +126,22 @@ class Photo extends Model
         ];
     }
 
+    /**
+     * Fotos que ninguém preencheu ainda: sem título, descrição, local, pessoas
+     * marcadas e fora de qualquer álbum. A data fica de fora do critério de
+     * propósito: o EXIF a preenche sozinho no envio, e contá-la tiraria da
+     * lista quase toda foto de celular, mesmo intocada.
+     */
+    public function scopeWithoutDetails(Builder $query): Builder
+    {
+        return $query
+            ->where(fn ($q) => $q->whereNull('title')->orWhere('title', ''))
+            ->where(fn ($q) => $q->whereNull('description')->orWhere('description', ''))
+            ->whereNull('location_id')
+            ->whereDoesntHave('people')
+            ->whereDoesntHave('albums');
+    }
+
     /** Fotos de um ano. */
     public function scopeTakenInYear(Builder $query, int $year): Builder
     {

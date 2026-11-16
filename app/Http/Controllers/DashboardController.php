@@ -19,6 +19,7 @@ class DashboardController extends Controller
         $personCount = $user->visiblePeople()->count();
         $userCount = User::count();
         $albumCount = Album::count();
+        $pendingCount = Photo::accessibleTo($user)->withoutDetails()->count();
 
         $recentPhotos = Photo::accessibleTo($user)
             ->with(['people', 'exif'])
@@ -26,6 +27,6 @@ class DashboardController extends Controller
             ->limit(8)
             ->get();
 
-        return view('dashboard', compact('photoCount', 'personCount', 'userCount', 'albumCount', 'recentPhotos'));
+        return view('dashboard', compact('photoCount', 'personCount', 'userCount', 'albumCount', 'pendingCount', 'recentPhotos'));
     }
 }
