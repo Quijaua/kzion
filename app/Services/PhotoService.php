@@ -35,8 +35,11 @@ class PhotoService
      *
      * No console (seeder, testes) o trabalho roda na hora, para o resultado ser
      * determinístico.
+     *
+     * `$readExif = false` pula a leitura do EXIF (escolha do toggle nos
+     * formulários de envio).
      */
-    public function store(UploadedFile $file, array $attributes = []): Photo
+    public function store(UploadedFile $file, array $attributes = [], bool $readExif = true): Photo
     {
         $now = now();
         $folder = $now->format('Y/m');
@@ -64,7 +67,7 @@ class PhotoService
             'checksum' => $checksum,
         ], $attributes));
 
-        $finish = function () use ($photo, $originalRel) {
+        $finish = function () use ($photo, $originalRel, $readExif) {
             // A foto pode ter sido removida da fila (revert) nesse meio tempo.
             if (! Photo::whereKey($photo->id)->exists() || ! Storage::exists($originalRel)) {
                 return;
@@ -77,10 +80,14 @@ class PhotoService
                 report($e); // sem miniatura a rota serve o original
             }
 
-            try {
-                $this->extractExif($photo->fresh(), Storage::path($originalRel));
-            } catch (\Throwable $e) {
-                report($e);
+            // Desligado no formulário quando as imagens não têm EXIF (scans,
+            // fotos de WhatsApp): pula a leitura e a gravação em `photo_exif`.
+            if ($readExif) {
+                try {
+                    $this->extractExif($photo->fresh(), Storage::path($originalRel));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
             }
         };
 

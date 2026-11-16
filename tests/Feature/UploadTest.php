@@ -173,4 +173,35 @@ class UploadTest extends TestCase
 
         $this->assertSame(hash('sha256', 'conteudo'), $photo->fresh()->checksum);
     }
+
+    public function test_exif_is_read_by_default_and_skipped_when_switched_off(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+
+        $comExif = $this->actingAs($user)
+            ->post(route('photos.upload'), ['filepond' => $this->image(600, 400)])
+            ->assertOk()->getContent();
+        $semExif = $this->actingAs($user)
+            ->post(route('photos.upload'), ['filepond' => $this->image(640, 480), 'read_exif' => '0'])
+            ->assertOk()->getContent();
+
+        $this->assertNotNull(Photo::find($comExif)->exif);
+        $this->assertNull(Photo::find($semExif)->exif);
+
+        // O resto do processamento continua: miniatura gerada normalmente.
+        $photo = Photo::find($semExif);
+        $this->assertTrue(Storage::exists('thumbnails/'.substr($photo->storage_path, strlen('photos/'))));
+    }
+
+    public function test_single_upload_honours_the_exif_switch(): void
+    {
+        $user = User::factory()->create(['role' => 'user']);
+
+        // Formulário com o switch desligado: só o hidden "0" é enviado.
+        $this->actingAs($user)
+            ->post('/photos', ['photos' => [$this->image()], 'read_exif' => '0'])
+            ->assertRedirect(route('photos.index'));
+
+        $this->assertNull(Photo::first()->exif);
+    }
 }

@@ -32,6 +32,19 @@
                            accept="image/jpeg,image/png,image/webp" required>
                     <div class="form-hint">JPG, PNG ou WEBP, até 20 MB.</div>
                     @error('photos')<div class="invalid-feedback">{{ $message }}</div>@enderror
+
+                    {{-- O hidden manda 0 quando o switch está desligado (checkbox
+                         desmarcado não é enviado); ligado, o 1 do checkbox prevalece. --}}
+                    <input type="hidden" name="read_exif" value="0">
+                    <label class="form-check form-switch mt-3 mb-0">
+                        <input class="form-check-input" type="checkbox" name="read_exif" value="1"
+                               @checked(old('read_exif', '1') !== '0')>
+                        <span class="form-check-label">Ler dados EXIF da imagem</span>
+                        <span class="form-check-description">
+                            Data, câmera e GPS gravados pela câmera. Desligue para scans, fotos
+                            de WhatsApp ou imagens editadas, que normalmente não têm EXIF.
+                        </span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -77,7 +90,7 @@
                             <label class="form-label" for="taken_at">Data da foto</label>
                             <input id="taken_at" type="date" name="taken_at" class="form-control"
                                    value="{{ old('taken_at') }}">
-                            <div class="form-hint">Se vazio, tentamos ler do EXIF.</div>
+                            <div class="form-hint">Se vazio e a leitura de EXIF estiver ligada, usamos a data do EXIF.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="location-id">Local</label>

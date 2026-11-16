@@ -112,6 +112,7 @@ class PhotoController extends Controller
         $request->validate([
             'filepond' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'upload_token' => ['nullable', 'uuid'],
+            'read_exif' => ['sometimes', 'boolean'],
         ]);
 
         $user = $request->user();
@@ -146,7 +147,7 @@ class PhotoController extends Controller
             ], 409);
         }
 
-        $photo = $this->photos->store($file, ['upload_token' => $token]);
+        $photo = $this->photos->store($file, ['upload_token' => $token], $request->boolean('read_exif', true));
 
         return response($photo->id, 200);
     }
@@ -200,6 +201,7 @@ class PhotoController extends Controller
             'description' => ['nullable', 'string'],
             'taken_at' => ['nullable', 'date'],
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            'read_exif' => ['sometimes', 'boolean'],
         ]);
 
         $files = collect($data['photos'])->filter(fn ($file) => $file instanceof UploadedFile);
@@ -228,7 +230,7 @@ class PhotoController extends Controller
                 'description' => $data['description'] ?? null,
                 'taken_at' => $data['taken_at'] ?? null,
                 'location_id' => $data['location_id'] ?? null,
-            ]);
+            ], $request->boolean('read_exif', true));
 
             if (! empty($data['person_ids'])) {
                 $photo->people()->syncWithoutDetaching($data['person_ids']);

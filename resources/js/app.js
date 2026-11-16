@@ -389,6 +389,7 @@ function initBulkUpload() {
     }
 
     const token = document.querySelector('#bulk-form [name=_token]')?.value || '';
+    const readExifSwitch = document.querySelector('#bulk-read-exif');
     const counter = document.querySelector('[data-upload-count]');
     const dupCounter = document.querySelector('[data-upload-duplicates]');
     let uploaded = 0;
@@ -431,6 +432,9 @@ function initBulkUpload() {
                 const fd = new FormData();
                 fd.append('filepond', file, file.name);
                 fd.append('upload_token', uploadToken);
+                // Read at send time, so flipping the switch affects the files
+                // that enter the queue from then on.
+                fd.append('read_exif', readExifSwitch && !readExifSwitch.checked ? '0' : '1');
 
                 const xhr = new XMLHttpRequest();
                 let settled = false;

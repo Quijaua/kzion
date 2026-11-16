@@ -24,6 +24,15 @@
             <div class="card-body">
                 <form id="bulk-form">
                     @csrf
+                    <label class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="bulk-read-exif" checked>
+                        <span class="form-check-label">Ler dados EXIF das imagens</span>
+                        <span class="form-check-description">
+                            Data, câmera e GPS gravados pela câmera. Desligue para scans, fotos de
+                            WhatsApp ou imagens editadas, que normalmente não têm EXIF. Vale para as
+                            imagens que entrarem na fila a partir de agora.
+                        </span>
+                    </label>
                     <input type="file" name="photos[]" id="bulk-upload" class="filepond" multiple
                            accept="image/jpeg,image/png,image/webp">
                 </form>
@@ -51,7 +60,7 @@
                 <ul class="list-unstyled text-secondary mb-0 d-grid gap-2">
                     <li><i class="ti ti-point text-primary me-1"></i> Cada imagem sobe imediatamente e vira um registro de foto.</li>
                     <li><i class="ti ti-point text-primary me-1"></i> Título, pessoas e álbuns ficam para depois — edite foto a foto.</li>
-                    <li><i class="ti ti-point text-primary me-1"></i> Data e câmera são lidas do EXIF automaticamente, quando existirem.</li>
+                    <li><i class="ti ti-point text-primary me-1"></i> Data e câmera são lidas do EXIF automaticamente, quando existirem (pode desligar acima).</li>
                     <li><i class="ti ti-point text-primary me-1"></i> Removeu da fila antes de concluir? A foto é apagada do servidor.</li>
                     <li><i class="ti ti-point text-primary me-1"></i> <strong>Processando…</strong> quer dizer que o arquivo já chegou e o servidor está terminando. Só conta como enviada quando aparece <strong>Enviada</strong>; se a resposta demorar, o sistema confere sozinho se a foto foi salva.</li>
                     <li><i class="ti ti-point text-primary me-1"></i> <strong>Já está no acervo</strong>: essa mesma imagem já foi enviada antes e não foi duplicada.</li>
