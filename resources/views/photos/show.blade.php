@@ -79,6 +79,9 @@
                         <dd class="col-7">{{ $photo->uploader->name }}</dd>
                     @endif
 
+                    <dt class="col-5 text-secondary fw-normal">Enviada em</dt>
+                    <dd class="col-7">{{ $photo->created_at?->timezone('America/Sao_Paulo')->format('d/m/Y H:i') ?? '—' }}</dd>
+
                     @if($photo->file_size)
                         <dt class="col-5 text-secondary fw-normal">Tamanho</dt>
                         <dd class="col-7">
