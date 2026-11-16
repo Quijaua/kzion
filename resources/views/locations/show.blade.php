@@ -11,6 +11,9 @@
 @endsection
 
 @section('page-actions')
+    <a href="{{ route('locations.create') }}" class="btn">
+        <i class="ti ti-map-pin-plus me-1"></i> Novo local
+    </a>
     <a href="{{ route('photos.index', ['location' => $location->name]) }}" class="btn">
         <i class="ti ti-search me-1"></i> Buscar neste local
     </a>

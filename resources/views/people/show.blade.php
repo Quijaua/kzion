@@ -11,6 +11,9 @@
 @endsection
 
 @section('page-actions')
+    <a href="{{ route('people.create') }}" class="btn">
+        <i class="ti ti-user-plus me-1"></i> Nova pessoa
+    </a>
     <a href="{{ route('photos.index', ['people' => [$person->id]]) }}" class="btn">
         <i class="ti ti-search me-1"></i> Buscar com esta pessoa
     </a>
