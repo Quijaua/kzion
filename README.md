@@ -5,7 +5,8 @@ Aplicação Laravel para arquivar fotos de família, com autenticação, permiss
 por pessoa, tags (pessoas), álbuns, extração de EXIF e pesquisa.
 
 - **Backend:** Laravel 12 (PHP 8.3)
-- **Frontend:** Blade + Tabler (CDN)
+- **Frontend:** Blade + Tabler 1.7 + Tabler Icons 3.52 (pacotes npm, empacotados pelo Vite —
+  não há CDN; qualquer mudança no front-end exige `npm run build`)
 - **Banco:** MariaDB (produção) / SQLite (desenvolvimento e testes)
 - **Imagens:** Intervention Image v4
 - **EXIF:** extensão `exif` do PHP (sem ExifTool)

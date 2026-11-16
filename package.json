@@ -16,8 +16,8 @@
         "@laravel/multiplex": "^0.4.1"
     },
     "dependencies": {
-        "@tabler/core": "^1.4.0",
-        "@tabler/icons-webfont": "^3.46.0",
+        "@tabler/core": "^1.7.5",
+        "@tabler/icons-webfont": "^3.52.0",
         "filepond": "^4.32.12",
         "jquery": "^3.7.1",
         "select2": "^4.1.0",

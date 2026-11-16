@@ -511,3 +511,41 @@ body.lightbox-open {
     text-decoration-color: var(--tblr-primary);
     color: var(--tblr-primary);
 }
+
+/* -------------------------------------------------------------------------
+ * Áreas escuras numa página clara (ex.: o menu lateral, data-bs-theme="dark")
+ *
+ * Desde a 1.4 o Tabler monta as cores com light-dark(), declaradas no :root.
+ * Uma variável CSS é resolvida onde é DECLARADA: no :root claro, light-dark()
+ * já vira a cor clara, e é essa cor pronta que a área escura herda. Resultado:
+ * menu com fundo branco e texto branco (o texto o Tabler define explícito).
+ *
+ * Repetir as declarações aqui faz o light-dark() ser resolvido DENTRO da área
+ * escura, onde color-scheme é dark. Os valores são cópia exata do :root do
+ * Tabler 1.7.5 — ao atualizar o Tabler, compare com o bloco
+ * `:root, :host, [data-bs-theme=light]` de dist/css/tabler.css.
+ * ---------------------------------------------------------------------- */
+[data-bs-theme=dark]:not(:root) {
+    --tblr-bg-surface: light-dark(var(--tblr-bg-surface-primary), var(--tblr-gray-800));
+    --tblr-bg-surface-secondary: light-dark(var(--tblr-gray-50), var(--tblr-gray-900));
+    --tblr-bg-surface-tertiary: light-dark(color-mix(in oklab, var(--tblr-body-color) 2.5%, transparent), color-mix(in oklab, var(--tblr-body-color) 4%, transparent));
+    --tblr-bg-surface-inverted: light-dark(var(--tblr-gray-900), var(--tblr-gray-100));
+    --tblr-bg-forms: light-dark(var(--tblr-bg-surface), var(--tblr-gray-900));
+    --tblr-bg-forms-disabled: light-dark(var(--tblr-bg-surface-secondary), color-mix(in oklab, var(--tblr-body-color) 4%, transparent));
+    --tblr-text-inverted: light-dark(var(--tblr-gray-100), var(--tblr-gray-800));
+    --tblr-body-color: light-dark(var(--tblr-gray-700), var(--tblr-gray-200));
+    --tblr-body-bg: light-dark(var(--tblr-bg-surface-secondary), var(--tblr-gray-900));
+    --tblr-link-color: light-dark(var(--tblr-primary), color-mix(in oklab, var(--tblr-white) 40%, var(--tblr-primary)));
+    --tblr-link-hover-color: light-dark(color-mix(in oklab, var(--tblr-black) 20%, var(--tblr-link-color)), color-mix(in oklab, var(--tblr-white) 20%, var(--tblr-link-color)));
+    --tblr-secondary: light-dark(var(--tblr-gray-500), var(--tblr-gray-400));
+    --tblr-muted: light-dark(var(--tblr-gray-500), var(--tblr-gray-400));
+    --tblr-tertiary: light-dark(var(--tblr-gray-500), var(--tblr-gray-400));
+    --tblr-border-color: light-dark(var(--tblr-gray-200), var(--tblr-gray-700));
+    --tblr-border-color-translucent: light-dark(color-mix(in oklab, var(--tblr-gray-800) 11.9%, transparent), var(--tblr-dark-mode-border-color-translucent));
+    --tblr-border-dark-color: light-dark(var(--tblr-gray-300), var(--tblr-dark-mode-border-dark-color));
+    --tblr-border-light-color: light-dark(var(--tblr-gray-200), var(--tblr-dark-mode-border-light-color));
+    --tblr-border-active-color: light-dark(var(--tblr-gray-400), var(--tblr-dark-mode-border-active-color));
+    --tblr-fill-tertiary: light-dark(color-mix(in oklab, var(--tblr-body-color) 4%, transparent), color-mix(in oklab, var(--tblr-body-color) 6%, transparent));
+    --tblr-active-bg: light-dark(color-mix(in oklab, var(--tblr-primary) 4%, transparent), color-mix(in oklab, var(--tblr-primary) 12%, transparent));
+    --tblr-code-color: light-dark(var(--tblr-gray-600), var(--tblr-gray-400));
+}
