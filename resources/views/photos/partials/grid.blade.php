@@ -17,7 +17,7 @@
                         <span class="photo-tile__title d-block">{{ $label }}</span>
                         <span class="photo-tile__meta d-block">
                             @if($photo->taken_at)
-                                {{ $photo->taken_at->format('d/m/Y') }}
+                                {{ $photo->taken_at_label }}
                             @endif
                             @if($photo->relationLoaded('people') && $photo->people->isNotEmpty())
                                 · {{ $photo->people->pluck('name')->join(', ') }}

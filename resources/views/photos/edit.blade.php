@@ -84,12 +84,10 @@
                     </div>
 
                     <div class="row g-2">
-                        <div class="col-md-6">
-                            <label class="form-label" for="taken_at">Data da foto</label>
-                            <input id="taken_at" type="date" name="taken_at" class="form-control"
-                                   value="{{ old('taken_at', $photo->taken_at?->format('Y-m-d')) }}">
+                        <div class="col-md-7">
+                            @include('photos.partials.date-fields', ['parts' => $photo->takenAtParts()])
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <label class="form-label" for="location-id">Local</label>
                             <select id="location-id" name="location_id" class="form-select @error('location_id') is-invalid @enderror"
                                     data-searchable data-placeholder="Escolha o local">

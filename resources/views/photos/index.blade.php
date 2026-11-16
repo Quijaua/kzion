@@ -7,9 +7,9 @@
     // emparelharia com o fechamento deste bloco e metade da view viraria PHP
     // cru. Pelo mesmo motivo, não escreva as diretivas literalmente nem dentro
     // de comentários.
-    $filtrando = request()->hasAny(['name', 'people', 'year', 'location', 'description', 'camera', 'album_id']);
+    $filtrando = request()->hasAny(['name', 'people', 'year', 'month', 'undated', 'location', 'description', 'camera', 'album_id']);
 
-    $advancedKeys = ['year', 'location', 'description', 'camera'];
+    $advancedKeys = ['year', 'month', 'location', 'description', 'camera'];
     $advancedActive = collect($advancedKeys)->contains(fn ($k) => filled(request($k)));
 
     // Chips dos filtros ativos: cada um remove só o próprio filtro.
@@ -40,6 +40,18 @@
         if (filled(request($key))) {
             $chips[] = ['label' => $label, 'value' => request($key), 'url' => request()->fullUrlWithQuery([$key => null, 'page' => null])];
         }
+    }
+
+    // Mês (da linha do tempo): 1..12, ou "unknown" = fotos que só têm o ano.
+    $monthFilter = request('month');
+    if ($monthFilter === 'unknown') {
+        $chips[] = ['label' => 'Mês', 'value' => 'não informado', 'url' => request()->fullUrlWithQuery(['month' => null, 'page' => null])];
+    } elseif (isset(\App\Models\Photo::MONTHS[(int) $monthFilter])) {
+        $chips[] = ['label' => 'Mês', 'value' => \App\Models\Photo::MONTHS[(int) $monthFilter], 'url' => request()->fullUrlWithQuery(['month' => null, 'page' => null])];
+    }
+
+    if (request()->boolean('undated')) {
+        $chips[] = ['label' => 'Data', 'value' => 'sem data', 'url' => request()->fullUrlWithQuery(['undated' => null, 'page' => null])];
     }
 @endphp
 
@@ -105,9 +117,18 @@
              data-expanded="{{ $advancedActive ? '1' : '0' }}">
             <div class="row g-2">
                 <div class="col-6 col-md-3">
-                    <label class="form-label" for="filter-year">Ano</label>
-                    <input id="filter-year" type="text" inputmode="numeric" name="year" class="form-control"
-                           value="{{ request('year') }}" placeholder="1987">
+                    <label class="form-label" for="filter-year">Ano e mês</label>
+                    <div class="input-group">
+                        <input id="filter-year" type="text" inputmode="numeric" name="year" class="form-control"
+                               value="{{ request('year') }}" placeholder="1987">
+                        <select name="month" class="form-select" aria-label="Mês">
+                            <option value="">Mês</option>
+                            @foreach(\App\Models\Photo::MONTHS as $n => $nome)
+                                <option value="{{ $n }}" @selected((string) request('month') === (string) $n)>{{ ucfirst($nome) }}</option>
+                            @endforeach
+                            <option value="unknown" @selected(request('month') === 'unknown')>Não informado</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <label class="form-label" for="filter-location">Local</label>

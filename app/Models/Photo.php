@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\User;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +27,7 @@ class Photo extends Model
         'title',
         'description',
         'taken_at',
+        'taken_at_precision',
         'location_id',
         'uploaded_by',
         'upload_token',
@@ -39,6 +42,129 @@ class Photo extends Model
             'height' => 'integer',
             'taken_at' => 'datetime',
         ];
+    }
+
+    /*
+     * Precisão da data da foto (`taken_at_precision`): quanto da data se sabe.
+     * A data é guardada sempre completa — 'year' como AAAA-01-01 e 'month' como
+     * AAAA-MM-01 — e a precisão diz quais partes são reais. Fotos antigas sem
+     * precisão (null) contam como 'day'.
+     */
+    public const PRECISION_YEAR = 'year';
+
+    public const PRECISION_MONTH = 'month';
+
+    public const PRECISION_DAY = 'day';
+
+    public const MONTHS = [
+        1 => 'janeiro', 2 => 'fevereiro', 3 => 'março', 4 => 'abril', 5 => 'maio', 6 => 'junho',
+        7 => 'julho', 8 => 'agosto', 9 => 'setembro', 10 => 'outubro', 11 => 'novembro', 12 => 'dezembro',
+    ];
+
+    /**
+     * Monta data + precisão a partir do que se sabe (ano; ano e mês; ou
+     * dia/mês/ano). Sem ano → sem data.
+     *
+     * @return array{0: ?Carbon, 1: ?string}
+     */
+    public static function dateFromParts(?int $year, ?int $month = null, ?int $day = null): array
+    {
+        if (! $year) {
+            return [null, null];
+        }
+
+        if (! $month) {
+            return [Carbon::create($year, 1, 1), self::PRECISION_YEAR];
+        }
+
+        if (! $day) {
+            return [Carbon::create($year, $month, 1), self::PRECISION_MONTH];
+        }
+
+        return [Carbon::create($year, $month, $day), self::PRECISION_DAY];
+    }
+
+    public function datePrecision(): ?string
+    {
+        if ($this->taken_at === null) {
+            return null;
+        }
+
+        return $this->taken_at_precision ?? self::PRECISION_DAY;
+    }
+
+    /** "1987", "março de 1987" ou "12/03/1987", conforme a precisão. */
+    public function getTakenAtLabelAttribute(): ?string
+    {
+        return match ($this->datePrecision()) {
+            null => null,
+            self::PRECISION_YEAR => $this->taken_at->format('Y'),
+            self::PRECISION_MONTH => self::MONTHS[(int) $this->taken_at->format('n')].' de '.$this->taken_at->format('Y'),
+            default => $this->taken_at->format('d/m/Y'),
+        };
+    }
+
+    /** Hora do EXIF, quando a data é completa e a hora é conhecida. */
+    public function getTakenAtTimeAttribute(): ?string
+    {
+        if ($this->datePrecision() !== self::PRECISION_DAY || $this->taken_at->format('H:i:s') === '00:00:00') {
+            return null;
+        }
+
+        return $this->taken_at->format('H:i');
+    }
+
+    /** Ano / mês / dia para os campos do formulário (null no que não se sabe). */
+    public function takenAtParts(): array
+    {
+        $p = $this->datePrecision();
+
+        return [
+            'year' => $p ? (int) $this->taken_at->format('Y') : null,
+            'month' => in_array($p, [self::PRECISION_MONTH, self::PRECISION_DAY], true) ? (int) $this->taken_at->format('n') : null,
+            'day' => $p === self::PRECISION_DAY ? (int) $this->taken_at->format('j') : null,
+        ];
+    }
+
+    /** Fotos de um ano. */
+    public function scopeTakenInYear(Builder $query, int $year): Builder
+    {
+        return $query->whereYear('taken_at', $year);
+    }
+
+    /**
+     * Fotos de um mês do ano (só as que têm o mês conhecido — uma foto "só de
+     * 1987" está guardada em janeiro, mas não é de janeiro).
+     */
+    public function scopeTakenInMonth(Builder $query, int $month): Builder
+    {
+        return $query->whereMonth('taken_at', $month)->whereKnownMonth();
+    }
+
+    public function scopeWhereKnownMonth(Builder $query): Builder
+    {
+        return $query->where(fn ($q) => $q
+            ->whereNull('taken_at_precision')
+            ->orWhere('taken_at_precision', '!=', self::PRECISION_YEAR));
+    }
+
+    /** Expressões SQL de ano e mês de `taken_at`, por banco (para agrupar). */
+    public static function yearSql(): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "CAST(strftime('%Y', taken_at) AS INTEGER)",
+            'pgsql' => 'CAST(EXTRACT(YEAR FROM taken_at) AS INTEGER)',
+            default => 'YEAR(taken_at)',
+        };
+    }
+
+    public static function monthSql(): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "CAST(strftime('%m', taken_at) AS INTEGER)",
+            'pgsql' => 'CAST(EXTRACT(MONTH FROM taken_at) AS INTEGER)',
+            default => 'MONTH(taken_at)',
+        };
     }
 
     /** @return BelongsToMany<Person> */

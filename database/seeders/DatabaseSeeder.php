@@ -50,7 +50,12 @@ class DatabaseSeeder extends Seeder
             $photo = (new PhotoService())->store($upload, [
                 'title' => 'Foto de exemplo '.$i,
                 'description' => 'Imagem de seed para o acervo familiar.',
-                'taken_at' => now()->subYears(40 - $i),
+                // Mistura as três precisões, como num acervo de verdade.
+                ...array_combine(['taken_at', 'taken_at_precision'], \App\Models\Photo::dateFromParts(
+                    now()->year - 40 + $i,
+                    $i % 3 === 0 ? null : ($i % 12) + 1,
+                    $i % 3 === 2 ? 15 : null,
+                )),
                 'location_id' => $campinas->id,
             ]);
 

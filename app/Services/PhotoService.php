@@ -149,6 +149,7 @@ class PhotoService
         // promete "se vazio, tentamos ler do EXIF".
         if ($photo->taken_at === null && isset($flattened['DateTimeOriginal'])) {
             $photo->taken_at = $this->parseDate($flattened['DateTimeOriginal']);
+            $photo->taken_at_precision = $photo->taken_at ? Photo::PRECISION_DAY : null;
         }
 
         $lat = $this->gps($flattened, 'GPSLatitude', $flattened['GPSLatitudeRef'] ?? null);

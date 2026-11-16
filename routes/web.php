@@ -7,6 +7,7 @@ use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('photos/{photo}/thumbnail', [PhotoController::class, 'thumbnail'])->name('photos.thumbnail');
 
     Route::resource('people', PersonController::class);
+
+    Route::get('/timeline', [TimelineController::class, 'index'])->name('timeline.index');
+    Route::get('/timeline/{year}', [TimelineController::class, 'year'])->whereNumber('year')->name('timeline.year');
 
     Route::resource('locations', LocationController::class);
 

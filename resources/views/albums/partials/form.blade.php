@@ -33,7 +33,7 @@
                             data-searchable data-placeholder="Busque e selecione as fotos">
                         @foreach($photos as $p)
                             <option value="{{ $p->id }}" @selected(in_array($p->id, (array) $selectedPhotos))>
-                                {{ $p->title ?? $p->original_filename }}@if($p->taken_at) — {{ $p->taken_at->format('d/m/Y') }}@endif
+                                {{ $p->title ?? $p->original_filename }}@if($p->taken_at) — {{ $p->taken_at_label }}@endif
                             </option>
                         @endforeach
                     </select>

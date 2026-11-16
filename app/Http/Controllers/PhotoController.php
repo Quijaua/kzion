@@ -43,8 +43,21 @@ class PhotoController extends Controller
             }
         }
 
-        if ($year = $request->input('year')) {
-            $query->whereYear('taken_at', $year);
+        if ($year = (int) $request->input('year')) {
+            $query->takenInYear($year);
+        }
+
+        // month=1..12 → fotos daquele mês (só as com mês conhecido);
+        // month=unknown → as que só têm o ano.
+        $month = $request->input('month');
+        if ($month === 'unknown') {
+            $query->where('taken_at_precision', Photo::PRECISION_YEAR);
+        } elseif ((int) $month >= 1 && (int) $month <= 12) {
+            $query->takenInMonth((int) $month);
+        }
+
+        if ($request->boolean('undated')) {
+            $query->whereNull('taken_at');
         }
 
         if ($location = $request->input('location')) {
@@ -199,7 +212,7 @@ class PhotoController extends Controller
             'album_ids.*' => ['integer', 'exists:albums,id'],
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'taken_at' => ['nullable', 'date'],
+            ...$this->dateRules(),
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'read_exif' => ['sometimes', 'boolean'],
         ]);
@@ -228,7 +241,7 @@ class PhotoController extends Controller
             $photo = $this->photos->store($file, [
                 'title' => $data['title'] ?? null,
                 'description' => $data['description'] ?? null,
-                'taken_at' => $data['taken_at'] ?? null,
+                ...$this->dateFromRequest($data),
                 'location_id' => $data['location_id'] ?? null,
             ], $request->boolean('read_exif', true));
 
@@ -293,14 +306,14 @@ class PhotoController extends Controller
             'album_ids.*' => ['integer', 'exists:albums,id'],
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'taken_at' => ['nullable', 'date'],
+            ...$this->dateRules(),
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
         ]);
 
         $photo->update([
             'title' => $data['title'] ?? null,
             'description' => $data['description'] ?? null,
-            'taken_at' => $data['taken_at'] ?? null,
+            ...$this->dateFromRequest($data, $photo),
             'location_id' => $data['location_id'] ?? null,
         ]);
 
@@ -352,5 +365,45 @@ class PhotoController extends Controller
         }
 
         return Response::file(Storage::path($thumb));
+    }
+
+    /**
+     * Data da foto em três campos: ano (obrigatório se houver data), mês e dia
+     * opcionais. A precisão sai do que foi preenchido.
+     */
+    private function dateRules(): array
+    {
+        return [
+            // Mês ou dia sem ano não forma data.
+            'taken_year' => ['nullable', 'required_with:taken_month,taken_day', 'integer', 'between:1800,'.(now()->year + 1)],
+            'taken_month' => ['nullable', 'integer', 'between:1,12', 'required_with:taken_day'],
+            'taken_day' => ['nullable', 'integer', 'between:1,31', function ($attribute, $value, $fail) {
+                $year = (int) request('taken_year');
+                $month = (int) request('taken_month');
+
+                if ($year && $month && ! checkdate($month, (int) $value, $year)) {
+                    $fail('Essa data não existe.');
+                }
+            }],
+        ];
+    }
+
+    /** ['taken_at' => …, 'taken_at_precision' => …] a partir dos campos validados. */
+    private function dateFromRequest(array $data, ?Photo $photo = null): array
+    {
+        [$date, $precision] = Photo::dateFromParts(
+            isset($data['taken_year']) ? (int) $data['taken_year'] : null,
+            isset($data['taken_month']) ? (int) $data['taken_month'] : null,
+            isset($data['taken_day']) ? (int) $data['taken_day'] : null,
+        );
+
+        // Mesma data completa de antes: preserva a hora (que veio do EXIF).
+        if ($photo && $date && $precision === Photo::PRECISION_DAY
+            && $photo->datePrecision() === Photo::PRECISION_DAY
+            && $photo->taken_at->isSameDay($date)) {
+            $date = $photo->taken_at;
+        }
+
+        return ['taken_at' => $date, 'taken_at_precision' => $precision];
     }
 }

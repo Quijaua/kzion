@@ -5,7 +5,7 @@
 @section('page-title', $label)
 @section('page-pretitle', 'Foto')
 @section('page-subtitle')
-    @if($photo->taken_at){{ $photo->taken_at->format('d/m/Y') }}@endif
+    @if($photo->taken_at){{ $photo->taken_at_label }}@endif
     @if($photo->location) · <a href="{{ route('locations.show', $photo->location) }}" class="text-reset">{{ $photo->location->name }}</a>@endif
 @endsection
 
@@ -61,7 +61,13 @@
                     <dd class="col-7">{{ $photo->description ?? '—' }}</dd>
 
                     <dt class="col-5 text-secondary fw-normal">Data</dt>
-                    <dd class="col-7">{{ $photo->taken_at?->format('d/m/Y H:i') ?? '—' }}</dd>
+                    <dd class="col-7">
+                        @if($photo->taken_at)
+                            <a href="{{ route('timeline.year', $photo->taken_at->format('Y')) }}" class="text-reset">{{ $photo->taken_at_label }}</a>@if($photo->taken_at_time), {{ $photo->taken_at_time }}@endif
+                        @else
+                            —
+                        @endif
+                    </dd>
 
                     <dt class="col-5 text-secondary fw-normal">Local</dt>
                     <dd class="col-7">
