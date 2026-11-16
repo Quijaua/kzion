@@ -3,6 +3,7 @@
         ['route' => 'dashboard',      'pattern' => 'dashboard',  'icon' => 'ti-layout-dashboard', 'label' => 'Painel'],
         ['route' => 'photos.index',   'pattern' => 'photos.*',   'icon' => 'ti-photo',            'label' => 'Fotos'],
         ['route' => 'people.index',   'pattern' => 'people.*',   'icon' => 'ti-users',            'label' => 'Pessoas'],
+        ['route' => 'locations.index', 'pattern' => 'locations.*', 'icon' => 'ti-map-pin',          'label' => 'Locais'],
         ['route' => 'albums.index',   'pattern' => 'albums.*',   'icon' => 'ti-album',            'label' => 'Álbuns'],
     ];
 

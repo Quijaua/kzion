@@ -25,7 +25,7 @@ class Photo extends Model
         'title',
         'description',
         'taken_at',
-        'location',
+        'location_id',
         'uploaded_by',
     ];
 
@@ -49,6 +49,12 @@ class Photo extends Model
     public function albums(): BelongsToMany
     {
         return $this->belongsToMany(Album::class, 'album_photos');
+    }
+
+    /** Local da foto (cadastro em /locations). */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     public function exif(): HasOne

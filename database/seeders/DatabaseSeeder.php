@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Album;
+use App\Models\Location;
 use App\Models\Person;
 use App\Models\User;
 use App\Services\PhotoService;
@@ -32,6 +33,8 @@ class DatabaseSeeder extends Seeder
             'Pedro Gomes',
         ])->map(fn ($name) => Person::firstOrCreate(['name' => $name], ['name' => $name]));
 
+        $campinas = Location::firstOrCreate(['name' => 'Campinas']);
+
         $manager = new ImageManager(new Driver());
         $colors = ['#c0392b', '#27ae60', '#2980b9', '#8e44ad', '#d35400'];
 
@@ -48,7 +51,7 @@ class DatabaseSeeder extends Seeder
                 'title' => 'Foto de exemplo '.$i,
                 'description' => 'Imagem de seed para o acervo familiar.',
                 'taken_at' => now()->subYears(40 - $i),
-                'location' => 'Campinas',
+                'location_id' => $campinas->id,
             ]);
 
             $photo->people()->sync([

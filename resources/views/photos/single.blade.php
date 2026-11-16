@@ -80,9 +80,20 @@
                             <div class="form-hint">Se vazio, tentamos ler do EXIF.</div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="location">Local</label>
-                            <input id="location" type="text" name="location" class="form-control"
-                                   value="{{ old('location') }}" placeholder="Cidade, praia, casa…">
+                            <label class="form-label" for="location-id">Local</label>
+                            <select id="location-id" name="location_id" class="form-select @error('location_id') is-invalid @enderror"
+                                    data-searchable data-placeholder="Escolha o local">
+                                <option value=""></option>
+                                @foreach($locations as $l)
+                                    <option value="{{ $l->id }}" @selected((string) old('location_id', '') === (string) $l->id)>{{ $l->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('location_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                            <div class="form-hint">
+                                Não está na lista?
+                                <a href="{{ route('locations.create') }}" target="_blank" rel="noopener">Cadastrar novo local</a>
+                                e recarregar esta página.
+                            </div>
                         </div>
                     </div>
                 </div>

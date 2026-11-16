@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Album;
+use App\Models\Location;
 use App\Models\Person;
 use App\Models\Photo;
 use App\Models\User;
@@ -47,7 +48,7 @@ class PhotoController extends Controller
         }
 
         if ($location = $request->input('location')) {
-            $query->where('location', 'like', "%{$location}%");
+            $query->whereHas('location', fn ($q) => $q->where('name', 'like', "%{$location}%"));
         }
 
         if ($name = $request->input('name')) {
@@ -83,8 +84,9 @@ class PhotoController extends Controller
             // própria foto sumir da vista dele assim que fosse salva.
             $people = $request->user()->visiblePeople()->orderBy('name')->get();
             $albums = Album::orderBy('name')->get();
+            $locations = Location::orderBy('name')->get();
 
-            return view('photos.single', compact('people', 'albums'));
+            return view('photos.single', compact('people', 'albums', 'locations'));
         }
 
         if ($mode === 'bulk') {
@@ -136,7 +138,7 @@ class PhotoController extends Controller
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'taken_at' => ['nullable', 'date'],
-            'location' => ['nullable', 'string', 'max:255'],
+            'location_id' => ['nullable', 'integer', 'exists:locations,id'],
         ]);
 
         $files = collect($data['photos'])->filter(fn ($file) => $file instanceof UploadedFile);
@@ -150,7 +152,7 @@ class PhotoController extends Controller
                 'title' => $data['title'] ?? null,
                 'description' => $data['description'] ?? null,
                 'taken_at' => $data['taken_at'] ?? null,
-                'location' => $data['location'] ?? null,
+                'location_id' => $data['location_id'] ?? null,
             ]);
 
             if (! empty($data['person_ids'])) {
@@ -168,7 +170,7 @@ class PhotoController extends Controller
    
     {
         $photo = Photo::accessibleTo($request->user())
-            ->with(['people', 'exif', 'albums', 'uploader'])
+            ->with(['people', 'exif', 'albums', 'uploader', 'location'])
             ->findOrFail($photo->id);
 
         return view('photos.show', compact('photo'));
@@ -183,8 +185,9 @@ class PhotoController extends Controller
         // propósito — `update()` as preserva no sync.
         $people = $request->user()->visiblePeople()->orderBy('name')->get();
         $albums = Album::orderBy('name')->get();
+        $locations = Location::orderBy('name')->get();
 
-        return view('photos.edit', compact('photo', 'people', 'albums'));
+        return view('photos.edit', compact('photo', 'people', 'albums', 'locations'));
     }
 
     public function update(Request $request, Photo $photo): RedirectResponse
@@ -199,14 +202,14 @@ class PhotoController extends Controller
             'title' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'taken_at' => ['nullable', 'date'],
-            'location' => ['nullable', 'string', 'max:255'],
+            'location_id' => ['nullable', 'integer', 'exists:locations,id'],
         ]);
 
         $photo->update([
             'title' => $data['title'] ?? null,
             'description' => $data['description'] ?? null,
             'taken_at' => $data['taken_at'] ?? null,
-            'location' => $data['location'] ?? null,
+            'location_id' => $data['location_id'] ?? null,
         ]);
 
         // Com a regra permissiva, o usuário pode abrir uma foto que também tem

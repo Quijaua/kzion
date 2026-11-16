@@ -6,7 +6,7 @@
 @section('page-pretitle', 'Foto')
 @section('page-subtitle')
     @if($photo->taken_at){{ $photo->taken_at->format('d/m/Y') }}@endif
-    @if($photo->location) · {{ $photo->location }}@endif
+    @if($photo->location) · <a href="{{ route('locations.show', $photo->location) }}" class="text-reset">{{ $photo->location->name }}</a>@endif
 @endsection
 
 @section('breadcrumbs')
@@ -64,7 +64,15 @@
                     <dd class="col-7">{{ $photo->taken_at?->format('d/m/Y H:i') ?? '—' }}</dd>
 
                     <dt class="col-5 text-secondary fw-normal">Local</dt>
-                    <dd class="col-7">{{ $photo->location ?? '—' }}</dd>
+                    <dd class="col-7">
+                        @if($photo->location)
+                            <a href="{{ route('locations.show', $photo->location) }}" class="badge bg-green-lt">
+                                <i class="ti ti-map-pin me-1"></i>{{ $photo->location->name }}
+                            </a>
+                        @else
+                            —
+                        @endif
+                    </dd>
 
                     <dt class="col-5 text-secondary fw-normal">Dimensões</dt>
                     <dd class="col-7">{{ $photo->width }}&times;{{ $photo->height }} px</dd>
