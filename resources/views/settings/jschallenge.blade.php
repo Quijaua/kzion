@@ -83,18 +83,6 @@
             </div>
         </div>
 
-        <input type="hidden" name="bind_ip" value="0">
-        <label class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" name="bind_ip" value="1" role="switch"
-                   @checked(old('bind_ip', $values['bind_ip'] ? '1' : '0') === '1')>
-            <span class="form-check-label">Amarrar o passe ao IP</span>
-            <span class="form-check-description">
-                Mais difícil de copiar o passe para outro lugar, mas quem troca de rede (4G ↔ Wi-Fi)
-                refaz o desafio. Mudar esta opção invalida os passes atuais: todo mundo passa pela
-                verificação uma vez. Padrão do .env: <strong>{{ $defaults['bind_ip'] ? 'ligado' : 'desligado' }}</strong>.
-            </span>
-        </label>
-
         <div class="mb-3">
             <label class="form-label" for="jsc-except">IPs que nunca veem o desafio</label>
             <textarea id="jsc-except" name="except_ips" rows="3"
@@ -161,9 +149,9 @@
             <div class="form-label">Rede do dispositivo</div>
             <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column">
                 @foreach([
-                    'prefix' => ['Mesma faixa de IP', 'Compara o começo do IP (/16 no IPv4). Trocar de rede pede o desafio de novo, uma vez.'],
+                    'none' => ['Não conferir a rede', 'Recomendado. O passe vale em qualquer rede até expirar: no kzion ele só pula a tela de verificação, não dá acesso a foto nenhuma.'],
+                    'prefix' => ['Mesma faixa de IP', 'Compara o começo do IP (/16 no IPv4). Trocar de rede (4G ↔ Wi-Fi) pede o desafio de novo, uma vez.'],
                     'asn' => ['Mesma operadora', 'Trocar entre 4G e Wi-Fi da mesma operadora não pede o desafio. Precisa da base GeoLite2-ASN da MaxMind.'],
-                    'none' => ['Não conferir a rede', 'Mais cômodo, menos seguro: o passe vale em qualquer rede até expirar.'],
                 ] as $mode => [$title, $text])
                     <label class="form-selectgroup-item flex-fill">
                         <input type="radio" name="trusted_network" value="{{ $mode }}" class="form-selectgroup-input"

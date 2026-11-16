@@ -18,6 +18,11 @@ use Symfony\Component\HttpFoundation\IpUtils;
  * lado de fora (inclusive o admin), desligar no `.env` + config:clear resolve
  * sem mexer no banco.
  *
+ * "Amarrar o passe ao IP" (JSCHALLENGE_BIND_IP) fica de fora DE PROPÓSITO: no
+ * kzion o passe só pula a tela de verificação (não dá acesso a foto nenhuma) e
+ * amarrá-lo ao IP só atrapalha quem usa celular (4G ↔ Wi-Fi, CGNAT). Continua
+ * existindo no .env para quem realmente quiser.
+ *
  * As chaves salvas ficam em cache (invalidado ao salvar), porque são lidas em
  * TODA requisição, antes do middleware do desafio — inclusive as de bots.
  */
@@ -32,7 +37,6 @@ class JsChallengeSettings
         'enabled' => 'jschallenge.enabled',
         'difficulty' => 'jschallenge.difficulty',
         'pass_ttl' => 'jschallenge.pass_ttl',
-        'bind_ip' => 'jschallenge.bind_ip',
         'except_ips' => 'jschallenge.except_ips',
         'trusted_enabled' => 'jschallenge.trusted.enabled',
         'trusted_days' => 'jschallenge.trusted.ttl_days',
@@ -40,7 +44,7 @@ class JsChallengeSettings
         'trusted_max_ips' => 'jschallenge.trusted.max_ips_per_hour',
     ];
 
-    private const BOOLS = ['enabled', 'bind_ip', 'trusted_enabled'];
+    private const BOOLS = ['enabled', 'trusted_enabled'];
 
     private const INTS = ['difficulty', 'pass_ttl', 'trusted_days', 'trusted_max_ips'];
 

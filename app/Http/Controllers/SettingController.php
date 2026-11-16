@@ -83,7 +83,6 @@ class SettingController extends Controller
             // o site. Abaixo de 8 não segura bot nenhum.
             'difficulty' => ['required', 'integer', 'between:8,22'],
             'pass_ttl_hours' => ['required', 'integer', 'between:1,720'],
-            'bind_ip' => ['required', 'boolean'],
             'except_ips' => ['nullable', 'string', 'max:5000', function ($attribute, $value, $fail) {
                 $invalid = array_filter(
                     JsChallengeSettings::parseIps($value),
@@ -109,7 +108,6 @@ class SettingController extends Controller
             'enabled' => (bool) $data['enabled'],
             'difficulty' => (int) $data['difficulty'],
             'pass_ttl' => (int) $data['pass_ttl_hours'] * 3600,
-            'bind_ip' => (bool) $data['bind_ip'],
             'except_ips' => JsChallengeSettings::parseIps($data['except_ips'] ?? ''),
             'trusted_enabled' => (bool) $data['trusted_enabled'],
             'trusted_days' => (int) $data['trusted_days'],

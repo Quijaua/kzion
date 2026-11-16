@@ -95,7 +95,10 @@ return [
         // Se true, todo login emite o passe longo, mesmo sem a caixa marcada
         'always' => (bool) env('JSCHALLENGE_TRUSTED_ALWAYS', false),
 
-        // Vínculo com a rede, comparado a cada acesso:
+        // Vínculo com a rede, comparado a cada acesso. No kzion o padrão é
+        // 'none': o passe só pula a tela de verificação (o acesso às fotos
+        // depende do login), então conferir a rede protegia pouco e pedia o
+        // desafio de novo a cada troca 4G ↔ Wi-Fi.
         //   'prefix' → mesma faixa de IP (IPv4 /16, IPv6 /48 por padrão)
         //   'asn'    → mesma operadora; requer `composer require maxmind-db/reader`
         //              e a base GeoLite2-ASN.mmdb (gratuita, com cadastro na MaxMind).
@@ -103,7 +106,7 @@ return [
         //   'none'   → não confere a rede
         // Rede diferente NÃO derruba o login: só mostra o desafio de novo,
         // e depois que ele é resolvido o dispositivo passa a valer na rede nova.
-        'network' => env('JSCHALLENGE_TRUSTED_NETWORK', 'prefix'),
+        'network' => env('JSCHALLENGE_TRUSTED_NETWORK', 'none'),
         'ipv4_prefix' => 16,
         'ipv6_prefix' => 48,
         'asn_db' => env('JSCHALLENGE_ASN_DB', storage_path('app/geoip/GeoLite2-ASN.mmdb')),

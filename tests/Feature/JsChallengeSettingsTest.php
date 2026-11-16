@@ -29,7 +29,6 @@ class JsChallengeSettingsTest extends TestCase
             'enabled' => '1',
             'difficulty' => '18',
             'pass_ttl_hours' => '24',
-            'bind_ip' => '0',
             'except_ips' => "200.1.2.3\n10.0.0.0/8",
             'trusted_enabled' => '1',
             'trusted_days' => '60',
@@ -144,5 +143,26 @@ class JsChallengeSettingsTest extends TestCase
 
         $this->assertSame(21, config('jschallenge.difficulty'));
         $this->assertSame('asn', config('jschallenge.trusted.network'));
+    }
+
+    public function test_bind_ip_is_not_editable_on_the_screen(): void
+    {
+        $envBindIp = config('jschallenge.bind_ip');
+
+        $this->actingAs($this->admin())
+            ->get(route('settings.jschallenge'))
+            ->assertDontSee('name="bind_ip"', false);
+
+        // Mesmo forjando o campo no POST, nada muda: segue o .env.
+        $this->actingAs($this->admin())
+            ->put(route('settings.jschallenge.update'), $this->payload(['bind_ip' => '1']));
+
+        $this->assertSame($envBindIp, config('jschallenge.bind_ip'));
+        $this->assertNull(Setting::get('jschallenge.bind_ip'));
+    }
+
+    public function test_trusted_network_defaults_to_none(): void
+    {
+        $this->assertSame('none', JsChallengeSettings::defaults()['trusted_network']);
     }
 }
