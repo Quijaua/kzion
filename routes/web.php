@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('photos', PhotoController::class);
     Route::post('photos/upload', [PhotoController::class, 'upload'])->name('photos.upload');
+    Route::get('photos/upload/status/{token}', [PhotoController::class, 'uploadStatus'])->name('photos.upload.status');
     Route::delete('photos/upload/{photo}', [PhotoController::class, 'uploadRevert'])->name('photos.upload.revert');
     Route::get('photos/{photo}/file', [PhotoController::class, 'file'])->name('photos.file');
     Route::get('photos/{photo}/thumbnail', [PhotoController::class, 'thumbnail'])->name('photos.thumbnail');

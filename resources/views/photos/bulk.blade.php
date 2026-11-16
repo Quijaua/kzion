@@ -33,6 +33,10 @@
                     <i class="ti ti-circle-check text-green me-1"></i>
                     <strong data-upload-count>0</strong> foto(s) enviada(s)
                 </span>
+                <span class="text-secondary" data-upload-duplicates-summary hidden>
+                    <i class="ti ti-copy text-orange me-1"></i>
+                    <strong data-upload-duplicates>0</strong> já estava(m) no acervo
+                </span>
                 <a href="{{ route('photos.index') }}" class="btn btn-primary ms-auto" id="bulk-done">
                     <i class="ti ti-circle-check me-1"></i> Concluir
                 </a>
@@ -49,6 +53,8 @@
                     <li><i class="ti ti-point text-primary me-1"></i> Título, pessoas e álbuns ficam para depois — edite foto a foto.</li>
                     <li><i class="ti ti-point text-primary me-1"></i> Data e câmera são lidas do EXIF automaticamente, quando existirem.</li>
                     <li><i class="ti ti-point text-primary me-1"></i> Removeu da fila antes de concluir? A foto é apagada do servidor.</li>
+                    <li><i class="ti ti-point text-primary me-1"></i> <strong>Processando…</strong> quer dizer que o arquivo já chegou e o servidor está terminando. Só conta como enviada quando aparece <strong>Enviada</strong>; se a resposta demorar, o sistema confere sozinho se a foto foi salva.</li>
+                    <li><i class="ti ti-point text-primary me-1"></i> <strong>Já está no acervo</strong>: essa mesma imagem já foi enviada antes e não foi duplicada.</li>
                 </ul>
             </div>
         </div>

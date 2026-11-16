@@ -27,6 +27,8 @@ class Photo extends Model
         'taken_at',
         'location_id',
         'uploaded_by',
+        'upload_token',
+        'checksum',
     ];
 
     protected function casts(): array

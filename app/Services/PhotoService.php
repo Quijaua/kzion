@@ -18,8 +18,23 @@ class PhotoService
         $this->manager = new ImageManager(new Driver());
     }
 
+    /** SHA-256 do arquivo: identifica a mesma imagem enviada de novo. */
+    public static function checksum(UploadedFile|string $file): string
+    {
+        return hash_file('sha256', $file instanceof UploadedFile ? $file->getRealPath() : $file);
+    }
+
     /**
-     * Store an uploaded image, generate a thumbnail, extract EXIF and persist.
+     * Grava o original e cria o registro da foto.
+     *
+     * A miniatura e o EXIF ficam para DEPOIS da resposta (`defer()`): gerar a
+     * miniatura de uma foto grande com GD leva segundos e muita memória, e era
+     * nessa espera que o envio em lote ficava parado em "Enviando 100%" — ou a
+     * conexão caía com a foto já salva. A rota de miniatura serve o original
+     * enquanto a miniatura não existe, e a data do EXIF aparece logo em seguida.
+     *
+     * No console (seeder, testes) o trabalho roda na hora, para o resultado ser
+     * determinístico.
      */
     public function store(UploadedFile $file, array $attributes = []): Photo
     {
@@ -27,12 +42,10 @@ class PhotoService
         $folder = $now->format('Y/m');
         $hash = md5($file->getClientOriginalName().$now->timestamp.random_bytes(8));
         $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+        $checksum = static::checksum($file);
 
         $originalRel = "photos/{$folder}/{$hash}.{$ext}";
         $file->storeAs("photos/{$folder}", "{$hash}.{$ext}");
-
-        $thumbRel = "thumbnails/{$folder}/{$hash}.{$ext}";
-        $this->makeThumbnail(Storage::path($originalRel), Storage::path($thumbRel));
 
         [$width, $height] = $this->readDimensions(Storage::path($originalRel));
 
@@ -48,9 +61,30 @@ class PhotoService
             'file_size' => $file->getSize(),
             'width' => $width,
             'height' => $height,
+            'checksum' => $checksum,
         ], $attributes));
 
-        $this->extractExif($photo, Storage::path($originalRel));
+        $finish = function () use ($photo, $originalRel) {
+            // A foto pode ter sido removida da fila (revert) nesse meio tempo.
+            if (! Photo::whereKey($photo->id)->exists() || ! Storage::exists($originalRel)) {
+                return;
+            }
+
+            try {
+                $thumbRel = 'thumbnails/'.substr($originalRel, strlen('photos/'));
+                $this->makeThumbnail(Storage::path($originalRel), Storage::path($thumbRel));
+            } catch (\Throwable $e) {
+                report($e); // sem miniatura a rota serve o original
+            }
+
+            try {
+                $this->extractExif($photo->fresh(), Storage::path($originalRel));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        };
+
+        app()->runningInConsole() ? $finish() : \Illuminate\Support\defer($finish);
 
         return $photo;
     }
@@ -104,7 +138,9 @@ class PhotoService
             }
         }
 
-        if (isset($flattened['DateTimeOriginal'])) {
+        // Só preenche a data se ninguém informou: o formulário de foto única
+        // promete "se vazio, tentamos ler do EXIF".
+        if ($photo->taken_at === null && isset($flattened['DateTimeOriginal'])) {
             $photo->taken_at = $this->parseDate($flattened['DateTimeOriginal']);
         }
 
@@ -116,6 +152,14 @@ class PhotoService
         if ($lon !== null) {
             $data['gps_longitude'] = $lon;
         }
+
+        // Campos binários (MakerNote, miniatura embutida) não são UTF-8 válido e
+        // derrubariam o json_encode do cast — e com ele o EXIF inteiro.
+        array_walk_recursive($flattened, function (&$v) {
+            if (is_string($v) && ! mb_check_encoding($v, 'UTF-8')) {
+                $v = '[binário, '.strlen($v).' bytes]';
+            }
+        });
 
         $data['exif_data_json'] = $flattened;
 

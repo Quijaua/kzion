@@ -337,7 +337,51 @@ function initConfirm() {
  * Each dropped image is uploaded immediately (FilePond `server.process`), which
  * creates the Photo record without metadata; metadata is filled in later on
  * each photo's edit page.
+ *
+ * "Enviando 100%" only means the bytes left the browser — the item turns into
+ * "Enviada" when the SERVER answers. When that answer is slow or gets lost
+ * (proxy timeout, dropped connection) the item used to sit at 100% forever,
+ * even though the photo was saved. So every file carries an `upload_token`
+ * generated here, and when the answer doesn't come the browser asks the server
+ * (`/photos/upload/status/{token}`) whether that photo exists. The item always
+ * ends as "Enviada" or as an error — never in limbo.
  * ---------------------------------------------------------------------- */
+
+/** UUID v4. `crypto.randomUUID` only exists on HTTPS/localhost. */
+function uuidV4() {
+    if (typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+
+    const b = crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+/** Message the server put in a JSON error body, if any. */
+function serverMessage(xhr) {
+    try {
+        const body = JSON.parse(xhr.responseText);
+        const firstError = body.errors && Object.values(body.errors)[0];
+        return (Array.isArray(firstError) ? firstError[0] : firstError) || body.message || null;
+    } catch {
+        return null;
+    }
+}
+
+// How long to wait for the server after the last byte left before asking it
+// directly, how often to ask, and when to give up on a request that never
+// answers at all.
+const UPLOAD_ANSWER_GRACE_MS = 15000;
+const UPLOAD_STATUS_INTERVAL_MS = 5000;
+const UPLOAD_GIVE_UP_MS = 3 * 60 * 1000;
+// After an HTTP error the photo may still have been saved (e.g. a 504 from the
+// proxy while PHP kept going): check a few times before calling it a failure.
+const UPLOAD_CONFIRM_TRIES = 6;
+
 function initBulkUpload() {
     const bulkInput = document.querySelector('#bulk-upload');
     if (!bulkInput) {
@@ -346,13 +390,25 @@ function initBulkUpload() {
 
     const token = document.querySelector('#bulk-form [name=_token]')?.value || '';
     const counter = document.querySelector('[data-upload-count]');
+    const dupCounter = document.querySelector('[data-upload-duplicates]');
     let uploaded = 0;
+    let duplicates = 0;
 
     function refreshCounter() {
         if (counter) {
             counter.textContent = String(uploaded);
             counter.closest('[data-upload-summary]')?.toggleAttribute('hidden', uploaded === 0);
         }
+        if (dupCounter) {
+            dupCounter.textContent = String(duplicates);
+            dupCounter.closest('[data-upload-duplicates-summary]')?.toggleAttribute('hidden', duplicates === 0);
+        }
+    }
+
+    /** The status line of the FilePond item showing `file`. */
+    function statusElementFor(file) {
+        const item = pond.getFiles().find((i) => i.file === file);
+        return item ? document.querySelector(`#filepond--item-${item.id} .filepond--file-status-main`) : null;
     }
 
     const pond = FilePond.create(bulkInput, {
@@ -364,33 +420,142 @@ function initBulkUpload() {
         labelFileProcessing: 'Enviando',
         labelFileProcessingComplete: 'Enviada',
         labelFileProcessingAborted: 'Envio cancelado',
-        labelFileProcessingError: 'Erro no envio',
+        // `error` below passes a specific message ("Já está no acervo", …).
+        labelFileProcessingError: (err) => (err && typeof err.body === 'string' && err.body) || 'Erro no envio',
         labelTapToCancel: 'toque para cancelar',
         labelTapToRetry: 'toque para tentar de novo',
         labelTapToUndo: 'toque para desfazer',
         server: {
             process: (fieldName, file, metadata, load, error, progress, abort) => {
+                const uploadToken = uuidV4();
                 const fd = new FormData();
                 fd.append('filepond', file, file.name);
+                fd.append('upload_token', uploadToken);
 
                 const xhr = new XMLHttpRequest();
+                let settled = false;
+                let timer = null;
+                let labelTimer = null;
+
+                const settle = (fn, arg) => {
+                    if (settled) {
+                        return;
+                    }
+                    settled = true;
+                    clearTimeout(timer);
+                    clearInterval(labelTimer);
+                    fn(arg);
+                };
+
+                const succeed = (id) => {
+                    uploaded += 1;
+                    refreshCounter();
+                    settle(load, String(id).trim());
+                };
+
+                const fail = (message) => settle(error, message);
+
+                /**
+                 * Ask the server whether the photo with this token exists.
+                 * Found → "Enviada". Not found → `onMissing()` once `tries` run out.
+                 */
+                const askServer = (tries, onMissing) => {
+                    if (settled) {
+                        return;
+                    }
+                    fetch(`/photos/upload/status/${uploadToken}`, {
+                        headers: { Accept: 'text/plain' },
+                        credentials: 'same-origin',
+                    })
+                        .then((r) => (r.ok ? r.text().then(succeed) : Promise.reject(r.status)))
+                        .catch(() => {
+                            if (settled) {
+                                return;
+                            }
+                            if (tries > 1) {
+                                timer = setTimeout(() => askServer(tries - 1, onMissing), UPLOAD_STATUS_INTERVAL_MS);
+                            } else {
+                                onMissing();
+                            }
+                        });
+                };
+
                 xhr.open('POST', '/photos/upload');
                 xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                xhr.setRequestHeader('Accept', 'application/json');
+
                 xhr.upload.onprogress = (e) => progress(e.lengthComputable, e.loaded, e.total);
+
+                // Every byte has left the browser: from here on the server is
+                // working, so say so instead of freezing on "Enviando 100%".
+                // FilePond rewrites the label while it animates the progress
+                // ring, hence the interval rather than a single write.
+                xhr.upload.onload = () => {
+                    labelTimer = setInterval(() => {
+                        const el = statusElementFor(file);
+                        if (el && !settled && el.textContent !== 'Processando…') {
+                            el.textContent = 'Processando…';
+                        }
+                    }, 250);
+
+                    // The answer is taking long: ask the server directly, and
+                    // keep asking while the request is still open.
+                    const tries = Math.ceil((UPLOAD_GIVE_UP_MS - UPLOAD_ANSWER_GRACE_MS) / UPLOAD_STATUS_INTERVAL_MS);
+                    timer = setTimeout(
+                        () =>
+                            askServer(tries, () => {
+                                xhr.abort();
+                                fail('Não chegou ao servidor');
+                            }),
+                        UPLOAD_ANSWER_GRACE_MS
+                    );
+                };
+
                 xhr.onload = () => {
+                    if (settled) {
+                        return;
+                    }
                     if (xhr.status >= 200 && xhr.status < 300) {
-                        uploaded += 1;
-                        refreshCounter();
-                        load(xhr.responseText);
-                    } else {
-                        error('Erro ao enviar a imagem');
+                        succeed(xhr.responseText);
+                        return;
+                    }
+
+                    clearTimeout(timer);
+
+                    switch (xhr.status) {
+                        case 409: // same image already in the archive
+                            duplicates += 1;
+                            refreshCounter();
+                            fail('Já está no acervo');
+                            return;
+                        case 413:
+                            fail('Arquivo grande demais para o servidor');
+                            return;
+                        case 419:
+                            fail('Sessão expirada — recarregue a página');
+                            return;
+                        case 422:
+                            fail(serverMessage(xhr) || 'Arquivo recusado');
+                            return;
+                        default:
+                            // 5xx / proxy errors: the photo may have been saved anyway.
+                            askServer(UPLOAD_CONFIRM_TRIES, () => fail('Erro no envio'));
                     }
                 };
-                xhr.onerror = () => error('Erro ao enviar a imagem');
+
+                // Connection dropped: same doubt, same check.
+                xhr.onerror = () => {
+                    clearTimeout(timer);
+                    askServer(UPLOAD_CONFIRM_TRIES, () => fail('Erro no envio'));
+                };
+
                 xhr.send(fd);
 
                 return {
                     abort: () => {
+                        settled = true;
+                        clearTimeout(timer);
+                        clearInterval(labelTimer);
                         xhr.abort();
                         abort();
                     },

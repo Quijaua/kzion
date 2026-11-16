@@ -97,26 +97,87 @@ class PhotoController extends Controller
     }
 
     /**
-     * FilePond process endpoint for bulk uploads. Stores each dropped image
-     * immediately (no metadata yet); metadata is filled in individually later.
+     * Endpoint do FilePond no envio em lote. Grava cada imagem assim que entra
+     * na fila (sem metadados; eles são preenchidos depois, foto a foto).
+     *
+     * O navegador manda um `upload_token` por arquivo. Se a resposta se perder,
+     * ele consulta `uploadStatus()` com esse token para saber se a foto chegou;
+     * e se reenviar o mesmo arquivo, recebe a foto já criada em vez de uma cópia.
+     *
+     * Respostas: 200 com o id da foto (texto); 409 em JSON quando a mesma imagem
+     * já está no acervo e o usuário consegue vê-la.
      */
     public function upload(Request $request)
     {
         $request->validate([
             'filepond' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'upload_token' => ['nullable', 'uuid'],
         ]);
 
-        $photo = $this->photos->store($request->file('filepond'), []);
+        $user = $request->user();
+        $token = $request->input('upload_token');
+
+        if ($token) {
+            $existente = Photo::where('upload_token', $token)->first();
+
+            if ($existente && (int) $existente->uploaded_by === $user->id) {
+                return response($existente->id, 200);
+            }
+
+            if ($existente) {
+                $token = null; // token de outra pessoa: não reaproveita
+            }
+        }
+
+        $file = $request->file('filepond');
+
+        // Só conta como duplicada a foto que este usuário consegue ver. Avisar
+        // de uma que ele não vê revelaria que ela existe — e ele ficaria sem a
+        // própria cópia.
+        $duplicada = Photo::accessibleTo($user)
+            ->where('checksum', PhotoService::checksum($file))
+            ->first();
+
+        if ($duplicada) {
+            return response()->json([
+                'message' => 'Esta foto já está no acervo.',
+                'id' => $duplicada->id,
+                'url' => route('photos.show', $duplicada),
+            ], 409);
+        }
+
+        $photo = $this->photos->store($file, ['upload_token' => $token]);
 
         return response($photo->id, 200);
     }
 
     /**
-     * FilePond revert endpoint: a previously uploaded (bulk) photo was removed
-     * from the pond before finishing, so delete it.
+     * "Esta foto chegou?" — consultado pelo envio em lote quando a resposta do
+     * upload demora ou se perde. Só responde sobre envios do próprio usuário.
      */
-    public function uploadRevert(Photo $photo)
+    public function uploadStatus(Request $request, string $token)
     {
+        $photo = Photo::where('upload_token', $token)
+            ->where('uploaded_by', $request->user()->id)
+            ->first();
+
+        abort_unless($photo, 404);
+
+        return response($photo->id, 200);
+    }
+
+    /**
+     * Revert do FilePond: a foto foi tirada da fila antes de concluir, então é
+     * apagada. Só quem enviou (ou um admin) — antes qualquer usuário logado
+     * conseguia apagar qualquer foto chamando esta rota com outro id.
+     */
+    public function uploadRevert(Request $request, Photo $photo)
+    {
+        abort_unless(
+            $request->user()->isAdmin() || (int) $photo->uploaded_by === $request->user()->id,
+            403
+        );
+
         Storage::delete($photo->storage_path);
         $thumb = 'thumbnails/'.substr($photo->storage_path, strlen('photos/'));
         Storage::delete($thumb);
@@ -147,7 +208,21 @@ class PhotoController extends Controller
             return back()->withErrors(['photos' => 'Nenhuma imagem válida foi enviada.'])->withInput();
         }
 
+        $enviadas = 0;
+        $repetidas = 0;
+
         foreach ($files as $file) {
+            $jaExiste = Photo::accessibleTo($request->user())
+                ->where('checksum', PhotoService::checksum($file))
+                ->exists();
+
+            if ($jaExiste) {
+                $repetidas++;
+                continue;
+            }
+
+            $enviadas++;
+
             $photo = $this->photos->store($file, [
                 'title' => $data['title'] ?? null,
                 'description' => $data['description'] ?? null,
@@ -163,7 +238,22 @@ class PhotoController extends Controller
             }
         }
 
-        return redirect()->route('photos.index')->with('status', 'Fotos enviadas com sucesso.');
+        if ($enviadas === 0) {
+            return back()
+                ->withErrors(['photos' => $repetidas === 1
+                    ? 'Esta foto já está no acervo.'
+                    : 'Todas as fotos enviadas já estão no acervo.'])
+                ->withInput();
+        }
+
+        $mensagem = 'Fotos enviadas com sucesso.';
+        if ($repetidas > 0) {
+            $mensagem .= $repetidas === 1
+                ? ' 1 delas já estava no acervo e foi ignorada.'
+                : " {$repetidas} delas já estavam no acervo e foram ignoradas.";
+        }
+
+        return redirect()->route('photos.index')->with('status', $mensagem);
     }
 
     public function show(Request $request, Photo $photo): View
