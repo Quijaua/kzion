@@ -537,6 +537,7 @@ function initBulkUpload() {
                         case 413:
                             fail('Arquivo grande demais para o servidor');
                             return;
+                        case 403: // passe do desafio JS venceu com a página aberta
                         case 419:
                             fail('Sessão expirada — recarregue a página');
                             return;

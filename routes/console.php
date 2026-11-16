@@ -4,6 +4,7 @@ use App\Models\Photo;
 use App\Services\PhotoService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Storage;
 
 Artisan::command('inspire', function () {
@@ -33,3 +34,7 @@ Artisan::command('photos:checksums', function () {
         $this->warn("{$faltando} foto(s) sem o arquivo original no disco foram puladas.");
     }
 })->purpose('Calcula o checksum (SHA-256) das fotos que ainda não têm');
+
+// Desafio JS: apaga os dispositivos confiáveis vencidos (precisa do cron do
+// agendador: * * * * * php /caminho/do/kzion/artisan schedule:run).
+Schedule::command('model:prune', ['--model' => [\App\Models\JsChallengeDevice::class]])->daily();

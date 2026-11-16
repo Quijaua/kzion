@@ -40,6 +40,7 @@
             <input type="checkbox" name="remember" class="form-check-input">
             <span class="form-check-label">Manter conectado neste dispositivo</span>
         </label>
+        @include('jschallenge.partials.trust-device')
     </div>
 
     <div class="form-footer">
